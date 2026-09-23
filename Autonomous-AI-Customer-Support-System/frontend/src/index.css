@@ -1,0 +1,192 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg-primary: #050505;
+  --bg-secondary: #0A0A0A;
+  --bg-card: #111111;
+  --bg-card-hover: #171717;
+  --border-color: #222222;
+  --divider-color: #2E2E2E;
+  
+  --text-muted: #666666;
+  --text-secondary: #999999;
+  --text-primary: #F5F5F5;
+  --text-emphasis: #FFFFFF;
+
+  --accent-green: #22C55E;
+  --accent-amber: #F59E0B;
+  --accent-red: #EF4444;
+  --accent-blue: #3B82F6;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
+
+/* Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  text-transform: uppercase;
+}
+
+.badge-green {
+  border-color: rgba(34, 197, 94, 0.3);
+  color: var(--accent-green);
+  background-color: rgba(34, 197, 94, 0.05);
+}
+
+.badge-amber {
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent-amber);
+  background-color: rgba(245, 158, 11, 0.05);
+}
+
+.badge-red {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--accent-red);
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+.badge-blue {
+  border-color: rgba(59, 130, 246, 0.3);
+  color: var(--accent-blue);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.badge-neutral {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.btn:hover {
+  background: var(--bg-card-hover);
+  border-color: #333333;
+}
+
+.btn-primary {
+  background: var(--text-emphasis);
+  color: #000000;
+  border-color: var(--text-emphasis);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: #E5E5E5;
+  border-color: #E5E5E5;
+}
+
+.btn-danger {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: var(--accent-red);
+  background: rgba(239, 68, 68, 0.08);
+}
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.btn-amber {
+  border-color: rgba(245, 158, 11, 0.4);
+  color: var(--accent-amber);
+  background: rgba(245, 158, 11, 0.08);
+}
+.btn-amber:hover {
+  background: rgba(245, 158, 11, 0.15);
+}
+
+/* Cards & Tables */
+.phrona-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.phrona-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.phrona-table th {
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+}
+
+.phrona-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.phrona-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
