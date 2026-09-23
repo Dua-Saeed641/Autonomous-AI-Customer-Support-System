@@ -1,25 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --bg-primary: #050505;
-  --bg-secondary: #0A0A0A;
-  --bg-card: #111111;
-  --bg-card-hover: #171717;
-  --border-color: #222222;
-  --divider-color: #2E2E2E;
-  
-  --text-muted: #666666;
-  --text-secondary: #999999;
-  --text-primary: #F5F5F5;
-  --text-emphasis: #FFFFFF;
+  /* shadcn dark theme zinc palette */
+  --background: #09090b;
+  --foreground: #fafafa;
 
-  --accent-green: #22C55E;
-  --accent-amber: #F59E0B;
-  --accent-red: #EF4444;
-  --accent-blue: #3B82F6;
+  --card: #0f0f12;
+  --card-foreground: #fafafa;
 
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --popover: #09090b;
+  --popover-foreground: #fafafa;
+
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fef2f2;
+
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #d4d4d8;
+
+  /* Subtle semantic tones (muted, zero neon) */
+  --status-emerald-bg: rgba(6, 78, 59, 0.35);
+  --status-emerald-text: #a7f3d0;
+  --status-emerald-border: rgba(5, 150, 105, 0.3);
+
+  --status-amber-bg: rgba(120, 53, 15, 0.35);
+  --status-amber-text: #fde68a;
+  --status-amber-border: rgba(217, 119, 6, 0.3);
+
+  --status-rose-bg: rgba(136, 19, 55, 0.35);
+  --status-rose-text: #fecdd3;
+  --status-rose-border: rgba(225, 29, 72, 0.3);
+
+  --status-blue-bg: rgba(30, 58, 138, 0.35);
+  --status-blue-text: #bfdbfe;
+  --status-blue-border: rgba(37, 99, 235, 0.3);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --radius: 8px;
 }
 
 * {
@@ -29,162 +59,261 @@
 }
 
 body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
-/* Custom Scrollbar */
+/* Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #262626;
-  border-radius: 3px;
+  background: #27272a;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #333333;
+  background: #3f3f46;
 }
 
-/* Status Badges */
+/* shadcn-style Badges */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 9999px;
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-card);
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--border);
+  background-color: #18181b;
+  color: #d4d4d8;
+  white-space: nowrap;
 }
 
-.badge-green {
-  border-color: rgba(34, 197, 94, 0.3);
-  color: var(--accent-green);
-  background-color: rgba(34, 197, 94, 0.05);
+.badge-emerald {
+  background-color: var(--status-emerald-bg);
+  color: var(--status-emerald-text);
+  border-color: var(--status-emerald-border);
 }
 
 .badge-amber {
-  border-color: rgba(245, 158, 11, 0.3);
-  color: var(--accent-amber);
-  background-color: rgba(245, 158, 11, 0.05);
+  background-color: var(--status-amber-bg);
+  color: var(--status-amber-text);
+  border-color: var(--status-amber-border);
 }
 
-.badge-red {
-  border-color: rgba(239, 68, 68, 0.3);
-  color: var(--accent-red);
-  background-color: rgba(239, 68, 68, 0.05);
+.badge-rose {
+  background-color: var(--status-rose-bg);
+  color: var(--status-rose-text);
+  border-color: var(--status-rose-border);
 }
 
 .badge-blue {
-  border-color: rgba(59, 130, 246, 0.3);
-  color: var(--accent-blue);
-  background-color: rgba(59, 130, 246, 0.05);
+  background-color: var(--status-blue-bg);
+  color: var(--status-blue-text);
+  border-color: var(--status-blue-border);
 }
 
 .badge-neutral {
-  border-color: var(--border-color);
-  color: var(--text-secondary);
-  background-color: var(--bg-secondary);
+  background-color: #18181b;
+  color: #a1a1aa;
+  border-color: #27272a;
 }
 
-/* Buttons */
+.badge-secondary {
+  background-color: #27272a;
+  color: #f4f4f5;
+  border-color: #3f3f46;
+}
+
+/* shadcn-style Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 6px 14px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-primary);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  border: 1px solid var(--border);
+  background: #18181b;
+  color: #e4e4e7;
   font-family: var(--font-sans);
+  outline: none;
 }
 
 .btn:hover {
-  background: var(--bg-card-hover);
-  border-color: #333333;
+  background: #27272a;
+  border-color: #3f3f46;
+  color: #fafafa;
 }
 
 .btn-primary {
-  background: var(--text-emphasis);
-  color: #000000;
-  border-color: var(--text-emphasis);
+  background: #fafafa;
+  color: #09090b;
+  border-color: #fafafa;
   font-weight: 600;
 }
 
 .btn-primary:hover {
-  background: #E5E5E5;
-  border-color: #E5E5E5;
+  background: #e4e4e7;
+  border-color: #e4e4e7;
+  color: #09090b;
 }
 
-.btn-danger {
-  border-color: rgba(239, 68, 68, 0.4);
-  color: var(--accent-red);
-  background: rgba(239, 68, 68, 0.08);
-}
-.btn-danger:hover {
-  background: rgba(239, 68, 68, 0.15);
+.btn-secondary {
+  background: #27272a;
+  color: #fafafa;
+  border-color: #3f3f46;
 }
 
-.btn-amber {
-  border-color: rgba(245, 158, 11, 0.4);
-  color: var(--accent-amber);
-  background: rgba(245, 158, 11, 0.08);
-}
-.btn-amber:hover {
-  background: rgba(245, 158, 11, 0.15);
+.btn-secondary:hover {
+  background: #3f3f46;
 }
 
-/* Cards & Tables */
-.phrona-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+.btn-outline {
+  background: transparent;
+  color: #d4d4d8;
+  border-color: #27272a;
+}
+
+.btn-outline:hover {
+  background: #18181b;
+  color: #fafafa;
+  border-color: #3f3f46;
+}
+
+.btn-destructive {
+  background: rgba(127, 29, 29, 0.4);
+  color: #fecaca;
+  border-color: rgba(185, 28, 28, 0.5);
+}
+
+.btn-destructive:hover {
+  background: rgba(127, 29, 29, 0.7);
+  border-color: rgba(220, 38, 38, 0.7);
+}
+
+/* shadcn-style Cards */
+.shadcn-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 16px;
+  position: relative;
 }
 
-.phrona-table {
+.shadcn-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.shadcn-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fafafa;
+  letter-spacing: -0.01em;
+}
+
+.shadcn-card-description {
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  line-height: 1.4;
+}
+
+/* shadcn-style Tables */
+.shadcn-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
 }
 
-.phrona-table th {
-  padding: 10px 12px;
+.shadcn-table th {
+  padding: 10px 14px;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-secondary);
+  font-weight: 500;
+  color: #a1a1aa;
+  border-bottom: 1px solid var(--border);
+  background-color: #111114;
 }
 
-.phrona-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-primary);
+.shadcn-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #1c1c20;
+  color: #e4e4e7;
+  font-size: 12.5px;
 }
 
-.phrona-table tr:hover td {
+.shadcn-table tr {
+  transition: background-color 0.1s ease;
+}
+
+.shadcn-table tr:hover td {
   background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Clean tabs pill container */
+.tab-pill-group {
+  display: inline-flex;
+  align-items: center;
+  background-color: #121215;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.tab-pill {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #a1a1aa;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.tab-pill.active {
+  background-color: #27272a;
+  color: #fafafa;
+}
+
+/* Input Fields */
+.shadcn-input {
+  width: 100%;
+  padding: 7px 10px;
+  background-color: #111114;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fafafa;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.shadcn-input:focus {
+  border-color: #52525b;
 }
 
 .font-mono {

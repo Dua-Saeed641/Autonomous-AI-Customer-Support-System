@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
-import { Search, Filter, ArrowUpRight } from 'lucide-react';
+import { Search, ArrowUpRight, CheckCircle2, AlertCircle, Activity } from 'lucide-react';
 
 export default function TicketsPage({ tickets, onSelectTicket }) {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [agentFilter, setAgentFilter] = useState('ALL');
   const [search, setSearch] = useState('');
 
-  const filteredTickets = tickets.filter(t => {
+  const filteredTickets = (tickets || []).filter(t => {
     if (statusFilter !== 'ALL' && t.status !== statusFilter) return false;
     if (agentFilter !== 'ALL' && t.assigned_agent !== agentFilter) return false;
-    if (search && !t.id.toLowerCase().includes(search.toLowerCase()) && !t.subject.toLowerCase().includes(search.toLowerCase()) && !t.customer_name.toLowerCase().includes(search.toLowerCase())) {
-      return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!t.id.toLowerCase().includes(q) && 
+          !t.subject.toLowerCase().includes(q) && 
+          !t.customer_name.toLowerCase().includes(q) &&
+          !t.intent.toLowerCase().includes(q)) {
+        return false;
+      }
     }
     return true;
   });
@@ -18,135 +24,130 @@ export default function TicketsPage({ tickets, onSelectTicket }) {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'RESOLVED':
-        return <span className="badge badge-green">✓ RESOLVED</span>;
+        return <span className="badge badge-emerald"><CheckCircle2 size={10} /> Resolved</span>;
       case 'WAITING_FOR_HUMAN':
-        return <span className="badge badge-amber">● AWAITING APPROVAL</span>;
+        return <span className="badge badge-amber"><AlertCircle size={10} /> Awaiting Approval</span>;
       case 'ANALYZING':
       case 'ROUTING':
       case 'VERIFYING':
-        return <span className="badge badge-blue">● {status}</span>;
+        return <span className="badge badge-neutral">{status.toLowerCase()}</span>;
       default:
-        return <span className="badge badge-neutral">● {status}</span>;
+        return <span className="badge badge-neutral">{status.toLowerCase()}</span>;
     }
   };
 
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      
       {/* Header & Filter Controls */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-emphasis)' }}>Support Tickets</h2>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Manage and inspect autonomous support workflow queues</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span className="badge badge-secondary">Operations Queue</span>
+            <span className="badge badge-neutral">{filteredTickets.length} Displayed</span>
+          </div>
+          <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#fafafa', letterSpacing: '-0.01em' }}>
+            Decision Intelligence Queues & Active Workflows
+          </h2>
+          <p style={{ fontSize: '12px', color: '#a1a1aa' }}>
+            Filter and inspect customer sessions across perception, agentic RAG, and human approval gates.
+          </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Status Filter */}
+        {/* Filter Controls Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          
           <select 
             value={statusFilter} 
             onChange={e => setStatusFilter(e.target.value)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              borderRadius: '4px',
-              fontSize: '12px',
-              outline: 'none'
-            }}
+            className="shadcn-input"
+            style={{ width: 'auto', height: '30px', fontSize: '11.5px', padding: '0 8px' }}
           >
             <option value="ALL">All Statuses</option>
-            <option value="NEW">New</option>
-            <option value="ANALYZING">Analyzing</option>
-            <option value="ROUTING">Routing</option>
-            <option value="ACTIVE">Active</option>
-            <option value="WAITING_FOR_HUMAN">Awaiting Human</option>
-            <option value="VERIFYING">Verifying</option>
-            <option value="RESOLVED">Resolved</option>
+            <option value="WAITING_FOR_HUMAN">Awaiting Human Approval</option>
+            <option value="ACTIVE">Active (In Flight)</option>
+            <option value="ANALYZING">Analyzing / Perception</option>
+            <option value="RESOLVED">Resolved (Verified)</option>
           </select>
 
-          {/* Agent Filter */}
           <select 
             value={agentFilter} 
             onChange={e => setAgentFilter(e.target.value)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              borderRadius: '4px',
-              fontSize: '12px',
-              outline: 'none'
-            }}
+            className="shadcn-input"
+            style={{ width: 'auto', height: '30px', fontSize: '11.5px', padding: '0 8px' }}
           >
-            <option value="ALL">All Agents</option>
-            <option value="Billing Agent">Billing Agent</option>
-            <option value="Account Agent">Account Agent</option>
-            <option value="Technical Agent">Technical Agent</option>
-            <option value="Order Agent">Order Agent</option>
-            <option value="Logistics Agent">Logistics Agent</option>
+            <option value="ALL">All Specialist Agents</option>
+            <option value="Billing Specialist Agent">Billing Specialist</option>
+            <option value="Order Lifecycle Agent">Order Lifecycle</option>
+            <option value="Diagnostics & Tech Agent">Diagnostics & Tech</option>
+            <option value="Identity & Security Agent">Identity & Security</option>
+            <option value="Logistics & Carrier Agent">Logistics & Carrier</option>
           </select>
 
-          {/* Search Box */}
-          <div style={{ position: 'relative', width: '220px' }}>
-            <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input
+          <div style={{ position: 'relative', width: '200px' }}>
+            <Search size={13} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: '#71717a' }} />
+            <input 
               type="text"
-              placeholder="Filter list..."
+              placeholder="Search queue..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '5px 10px 5px 30px',
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '4px',
-                color: 'var(--text-primary)',
-                fontSize: '12px',
-                outline: 'none'
-              }}
+              className="shadcn-input"
+              style={{ paddingLeft: '28px', height: '30px', fontSize: '11.5px' }}
             />
           </div>
         </div>
       </div>
 
       {/* Tickets Table */}
-      <div className="phrona-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="phrona-table">
+      <div className="shadcn-card" style={{ padding: 0, overflow: 'hidden' }}>
+        <table className="shadcn-table">
           <thead>
             <tr>
               <th>Ticket ID</th>
               <th>Customer</th>
               <th>Subject</th>
-              <th>Intent</th>
-              <th>Assigned Agent</th>
+              <th>Intent & Sentiment</th>
+              <th>Assigned Specialist</th>
               <th>Priority</th>
-              <th>Confidence</th>
+              <th>Governance Mode</th>
               <th>Status</th>
-              <th>Action</th>
+              <th>Inspect</th>
             </tr>
           </thead>
           <tbody>
             {filteredTickets.map(t => (
               <tr key={t.id} style={{ cursor: 'pointer' }} onClick={() => onSelectTicket(t.id)}>
-                <td className="font-mono" style={{ fontWeight: '600', color: 'var(--text-emphasis)' }}>{t.id}</td>
-                <td>{t.customer_name}</td>
+                <td className="font-mono" style={{ fontWeight: '600', color: '#fafafa' }}>
+                  {t.id}
+                </td>
+                <td>
+                  <div style={{ fontWeight: '500', color: '#fafafa' }}>{t.customer_name}</div>
+                  <div style={{ fontSize: '10.5px', color: '#71717a' }}>{t.customer_plan}</div>
+                </td>
                 <td style={{ maxWidth: '220px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {t.subject}
                 </td>
-                <td><span className="badge badge-neutral">{t.intent}</span></td>
-                <td>{t.assigned_agent}</td>
                 <td>
-                  <span className={`badge ${t.priority === 'CRITICAL' ? 'badge-red' : t.priority === 'HIGH' ? 'badge-amber' : 'badge-neutral'}`}>
+                  <span className="badge badge-neutral" style={{ fontSize: '9.5px' }}>{t.intent}</span>
+                  <div style={{ fontSize: '10px', color: '#a1a1aa', marginTop: '2px' }}>
+                    {t.sentiment}
+                  </div>
+                </td>
+                <td style={{ fontSize: '12px', color: '#a1a1aa' }}>
+                  {t.assigned_agent}
+                </td>
+                <td>
+                  <span className="badge badge-neutral" style={{ fontSize: '9px' }}>
                     {t.priority}
                   </span>
                 </td>
-                <td className="font-mono" style={{ fontWeight: '600', color: t.confidence >= 90 ? 'var(--accent-green)' : 'var(--accent-amber)' }}>
-                  {t.confidence}%
+                <td style={{ fontSize: '11px', color: '#a1a1aa' }}>
+                  {t.human_mode || 'Mode A'}
                 </td>
                 <td>{getStatusBadge(t.status)}</td>
                 <td>
-                  <button className="btn" style={{ padding: '2px 8px', fontSize: '11px' }}>
-                    Open <ArrowUpRight size={12} />
+                  <button className="btn btn-outline" style={{ padding: '2px 7px', fontSize: '10.5px' }}>
+                    Open <ArrowUpRight size={10} />
                   </button>
                 </td>
               </tr>
@@ -154,6 +155,7 @@ export default function TicketsPage({ tickets, onSelectTicket }) {
           </tbody>
         </table>
       </div>
+
     </div>
   );
 }

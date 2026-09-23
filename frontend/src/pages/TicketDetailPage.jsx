@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   ArrowLeft, 
   CheckCircle2, 
-  Clock, 
   AlertCircle, 
   Bot, 
   User, 
@@ -10,18 +9,22 @@ import {
   Wrench, 
   ShieldAlert, 
   Check, 
-  ChevronRight,
-  ExternalLink
+  ShieldCheck,
+  AlertTriangle
 } from 'lucide-react';
 
-export default function TicketDetailPage({ ticketDetail, onBack, onHumanAction }) {
-  const [activeModal, setActiveModal] = useState(null); // 'GUIDE', 'APPROVE', 'CORRECT', 'OVERRIDE'
+export default function TicketDetailPage({ 
+  ticketDetail, 
+  onBack, 
+  onHumanAction 
+}) {
+  const [activeModal, setActiveModal] = useState(null); // 'GUIDE', 'APPROVE', 'CORRECT', 'OVERRIDE', 'TEACH'
   const [inputText, setInputText] = useState('');
   const [reasonText, setReasonText] = useState('');
 
-  if (!ticketDetail) return <div style={{ padding: '24px', color: 'var(--text-muted)' }}>Loading ticket detail...</div>;
+  if (!ticketDetail) return <div style={{ padding: '32px', color: '#71717a' }}>Loading decision telemetry...</div>;
 
-  const { ticket, messages, events, tool_calls, knowledge_sources } = ticketDetail;
+  const { ticket, messages, events, tool_calls, knowledge_sources, fast_judgment } = ticketDetail;
 
   const handleSubmitAction = (actionType) => {
     onHumanAction(ticket.id, actionType, inputText, reasonText);
@@ -33,227 +36,334 @@ export default function TicketDetailPage({ ticketDetail, onBack, onHumanAction }
   const getStatusBadge = (status) => {
     switch (status) {
       case 'RESOLVED':
-        return <span className="badge badge-green">✓ RESOLVED</span>;
+        return <span className="badge badge-emerald"><CheckCircle2 size={10} /> Resolved</span>;
       case 'WAITING_FOR_HUMAN':
-        return <span className="badge badge-amber">● AWAITING APPROVAL</span>;
+        return <span className="badge badge-amber"><AlertCircle size={10} /> Approval Required</span>;
       case 'ANALYZING':
       case 'ROUTING':
       case 'VERIFYING':
-        return <span className="badge badge-blue">● {status}</span>;
+        return <span className="badge badge-neutral">{status.toLowerCase()}</span>;
       default:
-        return <span className="badge badge-neutral">● {status}</span>;
+        return <span className="badge badge-neutral">{status.toLowerCase()}</span>;
     }
   };
 
   return (
-    <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       
-      {/* Top Navigation & Actions Bar */}
+      {/* Top Header & Human Action Controls */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingBottom: '16px',
-        borderBottom: '1px solid var(--border-color)'
+        paddingBottom: '14px',
+        borderBottom: '1px solid var(--border)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button className="btn" onClick={onBack}>
-            <ArrowLeft size={14} /> Back to Tickets
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <button className="btn btn-outline" onClick={onBack} style={{ padding: '5px 10px' }}>
+            <ArrowLeft size={12} /> Back
           </button>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className="font-mono" style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-emphasis)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="font-mono" style={{ fontSize: '16px', fontWeight: '700', color: '#fafafa' }}>
                 {ticket.id}
               </span>
               {getStatusBadge(ticket.status)}
+              <span className="badge badge-neutral" style={{ fontSize: '10px' }}>
+                {ticket.human_mode || 'Mode D: Human Approval Required'}
+              </span>
             </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+            <div style={{ fontSize: '12.5px', color: '#a1a1aa', marginTop: '2px' }}>
               {ticket.subject}
             </div>
           </div>
         </div>
 
-        {/* Human Interactive Toolbar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button className="btn btn-amber" onClick={() => setActiveModal('GUIDE')}>
-            <ShieldAlert size={13} /> GUIDE AI
+        {/* Section 6: Human Controls Toolbar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button 
+            className="btn btn-outline" 
+            onClick={() => setActiveModal('GUIDE')}
+            title="Inject guidance into working context"
+          >
+            <ShieldAlert size={12} /> Guide AI
           </button>
-          <button className="btn btn-primary" onClick={() => setActiveModal('APPROVE')}>
-            <CheckCircle2 size={13} /> APPROVE
+          
+          <button 
+            className="btn btn-primary" 
+            onClick={() => setActiveModal('APPROVE')}
+            title="Authorize held financial action"
+          >
+            <CheckCircle2 size={12} /> Approve
           </button>
-          <button className="btn" onClick={() => setActiveModal('CORRECT')}>
-            CORRECT
+
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setActiveModal('CORRECT')}
+            title="Correct proposition (emits learning signal)"
+          >
+            Correct
           </button>
-          <button className="btn btn-danger" onClick={() => setActiveModal('OVERRIDE')}>
-            OVERRIDE
+
+          <button 
+            className="btn btn-destructive" 
+            onClick={() => setActiveModal('OVERRIDE')}
+            title="Override autonomous flow"
+          >
+            Override
+          </button>
+
+          <button 
+            className="btn btn-outline" 
+            onClick={() => setActiveModal('TEACH')}
+            title="Add candidate rule to organizational memory"
+          >
+            Teach Rule
           </button>
         </div>
       </div>
 
-      {/* Main 3-Column Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr 0.8fr', gap: '20px' }}>
+      {/* Contradiction Alert if applicable */}
+      {ticket.contradiction && (
+        <div style={{
+          padding: '10px 14px',
+          backgroundColor: ticket.contradiction_detected ? 'rgba(127, 29, 29, 0.25)' : '#141418',
+          border: `1px solid ${ticket.contradiction_detected ? 'rgba(185, 28, 28, 0.4)' : 'var(--border)'}`,
+          borderRadius: '6px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '11.5px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {ticket.contradiction_detected ? (
+              <AlertTriangle size={14} color="#fca5a5" />
+            ) : (
+              <ShieldCheck size={14} color="#a7f3d0" />
+            )}
+            <div>
+              <span style={{ fontWeight: '600', color: ticket.contradiction_detected ? '#fca5a5' : '#fafafa' }}>
+                {ticket.contradiction_detected ? 'Contradiction Detected (§7 / §17):' : 'Verification Status:'}
+              </span>
+              <span style={{ color: '#d4d4d8', marginLeft: '6px' }}>
+                {ticket.contradiction}
+              </span>
+            </div>
+          </div>
+          <span className="badge badge-neutral" style={{ fontSize: '9.5px' }}>Audited</span>
+        </div>
+      )}
+
+      {/* Main 3-Column Decision Cockpit (Section 24) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr 0.85fr', gap: '16px' }}>
         
-        {/* Column 1: Customer Conversation */}
-        <div className="phrona-card" style={{ display: 'flex', flexDirection: 'column', height: '620px' }}>
-          <div style={{
-            paddingBottom: '12px',
-            marginBottom: '12px',
-            borderBottom: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-emphasis)' }}>
-              Customer Conversation
-            </h3>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{messages.length} messages</span>
+        {/* Column 1: Customer Context & Conversation */}
+        <div className="shadcn-card" style={{ display: 'flex', flexDirection: 'column', height: '620px' }}>
+          <div className="shadcn-card-header" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <User size={13} color="#a1a1aa" />
+              <h3 className="shadcn-card-title">Customer Thread</h3>
+            </div>
+            <span className="badge badge-neutral">{messages?.length || 2} Messages</span>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px', paddingRight: '4px' }}>
-            {messages.map((m) => {
+          {/* Conversation Stream */}
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
+            {messages?.map((m) => {
               const isCustomer = m.sender === 'CUSTOMER';
               return (
                 <div key={m.id} style={{
                   alignSelf: isCustomer ? 'flex-start' : 'flex-end',
-                  maxWidth: '88%',
-                  backgroundColor: isCustomer ? 'var(--bg-secondary)' : '#161B22',
-                  border: `1px solid ${isCustomer ? 'var(--border-color)' : '#238636'}`,
+                  maxWidth: '92%',
+                  backgroundColor: isCustomer ? '#18181b' : '#27272a',
+                  border: '1px solid var(--border)',
                   borderRadius: '6px',
-                  padding: '10px 12px'
+                  padding: '9px 12px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                    {isCustomer ? <User size={12} color="var(--text-secondary)" /> : <Bot size={12} color="var(--accent-green)" />}
-                    <span style={{ fontSize: '11px', fontWeight: '600', color: isCustomer ? 'var(--text-secondary)' : 'var(--accent-green)' }}>
-                      {m.sender}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {isCustomer ? <User size={11} color="#a1a1aa" /> : <Bot size={11} color="#e4e4e7" />}
+                      <span style={{ fontSize: '10.5px', fontWeight: '600', color: isCustomer ? '#a1a1aa' : '#fafafa' }}>
+                        {isCustomer ? ticket.customer_name : 'Resolvyn AI'}
+                      </span>
+                    </div>
+                    <span className="font-mono" style={{ fontSize: '9.5px', color: '#71717a' }}>
+                      {m.timestamp || 'Realtime'}
                     </span>
                   </div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
+                  <div style={{ fontSize: '12px', color: '#f4f4f5', lineHeight: '1.45', whiteSpace: 'pre-wrap' }}>
                     {m.content}
                   </div>
                 </div>
               );
             })}
           </div>
+
+          {/* Guidance Input */}
+          <div style={{
+            paddingTop: '10px',
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            gap: '6px'
+          }}>
+            <input 
+              type="text"
+              placeholder="Inject supervisor guidance into context..."
+              value={inputText}
+              onChange={e => setInputText(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && inputText) {
+                  handleSubmitAction('GUIDE');
+                }
+              }}
+              className="shadcn-input"
+              style={{ fontSize: '11.5px', height: '32px' }}
+            />
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => handleSubmitAction('GUIDE')}
+              disabled={!inputText}
+              style={{ fontSize: '11px', padding: '0 12px' }}
+            >
+              Guide
+            </button>
+          </div>
         </div>
 
-        {/* Column 2: AI Operations Panel */}
-        <div className="phrona-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', maxHeight: '620px' }}>
+        {/* Column 2: Fast Judgment, RAG Evidence & Tool Execution */}
+        <div className="shadcn-card" style={{ display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto', maxHeight: '620px' }}>
           
-          {/* AI Understanding Section */}
-          <div style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
-            <h3 style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '10px' }}>
-              Understanding & Intent
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Intent:</span>
-                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-emphasis)' }}>{ticket.intent}</div>
-              </div>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Confidence:</span>
-                <div style={{ fontSize: '13px', fontWeight: '600', color: ticket.confidence >= 90 ? 'var(--accent-green)' : 'var(--accent-amber)' }}>
-                  {ticket.confidence}% (High)
-                </div>
-              </div>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sentiment:</span>
-                <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{ticket.sentiment}</div>
-              </div>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Urgency:</span>
-                <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{ticket.urgency}</div>
-              </div>
+          {/* Section 8 & 9: Fast Judgment */}
+          <div style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <h3 className="shadcn-card-title" style={{ fontSize: '12px', textTransform: 'uppercase', color: '#71717a' }}>
+                Fast Judgment Cascade (§9)
+              </h3>
+              <span className="badge badge-neutral">Confidence: {ticket.confidence || 96}%</span>
             </div>
-          </div>
 
-          {/* Specialist Agent Section */}
-          <div style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
-            <h3 style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
-              Assigned Agent
-            </h3>
             <div style={{
-              padding: '10px 12px',
-              backgroundColor: 'var(--bg-secondary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '6px',
+              padding: '8px 10px',
+              backgroundColor: '#111114',
+              borderRadius: '6px',
+              border: '1px solid var(--border)',
+              marginBottom: '8px'
             }}>
               <div>
-                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-emphasis)' }}>
-                  {ticket.assigned_agent}
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Specialist agent routing</div>
+                <div style={{ fontSize: '9.5px', color: '#71717a' }}>Intent:</div>
+                <div style={{ fontSize: '11.5px', fontWeight: '600', color: '#fafafa' }}>{ticket.intent}</div>
               </div>
-              <span className="badge badge-green">ACTIVE</span>
+              <div>
+                <div style={{ fontSize: '9.5px', color: '#71717a' }}>Sentiment:</div>
+                <div style={{ fontSize: '11.5px', fontWeight: '500', color: '#e4e4e7' }}>{ticket.sentiment}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '9.5px', color: '#71717a' }}>Frustration:</div>
+                <div className="font-mono" style={{ fontSize: '11.5px', fontWeight: '600', color: '#fafafa' }}>
+                  {ticket.frustration_index || "78%"}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '9.5px', color: '#71717a' }}>Urgency:</div>
+                <div style={{ fontSize: '11.5px', fontWeight: '500', color: '#fca5a5' }}>{ticket.urgency || "High"}</div>
+              </div>
             </div>
+
+            {fast_judgment && (
+              <div style={{ fontSize: '11.5px', color: '#a1a1aa', lineHeight: '1.4' }}>
+                <span style={{ color: '#71717a' }}>Policy Check:</span> {fast_judgment.policy_evaluation}
+              </div>
+            )}
           </div>
 
-          {/* Knowledge Retrieved Section */}
-          <div style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
-            <h3 style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
-              Knowledge & Memory Sources
-            </h3>
+          {/* Section 12 & 13: Auditable Evidence */}
+          <div style={{ paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <BookOpen size={12} color="#a1a1aa" />
+                <h3 className="shadcn-card-title" style={{ fontSize: '12px', textTransform: 'uppercase', color: '#71717a' }}>
+                  Auditable RAG Evidence (§13)
+                </h3>
+              </div>
+              <span className="badge badge-neutral">Traceable</span>
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {knowledge_sources.map(k => (
+              {knowledge_sources?.map(k => (
                 <div key={k.id} style={{
                   padding: '8px 10px',
-                  backgroundColor: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
+                  backgroundColor: '#111114',
+                  border: '1px solid var(--border)',
+                  borderRadius: '5px',
+                  fontSize: '11.5px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <BookOpen size={13} color="var(--accent-blue)" />
-                    <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{k.title}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+                    <span style={{ fontWeight: '500', color: '#fafafa' }}>{k.title}</span>
+                    <span className="font-mono" style={{ fontSize: '9.5px', color: '#71717a' }}>
+                      Score: {Math.round((k.relevance_score || 0.95) * 100)}%
+                    </span>
                   </div>
-                  <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Score: 0.94</span>
+                  <div style={{ color: '#a1a1aa', lineHeight: '1.35' }}>
+                    "{k.evidence || k.content}"
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Tools & API Calls Checklist */}
+          {/* Section 21 & 23: Tool Execution */}
           <div>
-            <h3 style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
-              Tools & Enterprise API Execution
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Wrench size={12} color="#a1a1aa" />
+                <h3 className="shadcn-card-title" style={{ fontSize: '12px', textTransform: 'uppercase', color: '#71717a' }}>
+                  Enterprise API Tool Calls (§21 & §23)
+                </h3>
+              </div>
+              <span className="badge badge-neutral">2-Phase Verify</span>
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {tool_calls.map((t) => (
+              {tool_calls?.map((t) => (
                 <div key={t.id} style={{
-                  padding: '8px 10px',
-                  backgroundColor: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '4px',
-                  fontSize: '12px'
+                  padding: '7px 9px',
+                  backgroundColor: '#111114',
+                  border: '1px solid var(--border)',
+                  borderRadius: '5px',
+                  fontSize: '11.5px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Wrench size={13} color="var(--text-secondary)" />
-                      <span className="font-mono" style={{ fontWeight: '600', color: 'var(--text-emphasis)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="font-mono" style={{ fontWeight: '500', color: '#fafafa' }}>
                         {t.tool_name}()
                       </span>
+                      <span className="badge badge-neutral" style={{ fontSize: '8.5px', padding: '0 4px' }}>
+                        {t.safety_level || 'READ_ONLY'}
+                      </span>
                     </div>
+
                     {t.status === 'COMPLETED' ? (
-                      <span className="badge badge-green"><Check size={10} /> Verified</span>
-                    ) : t.status === 'WAITING' ? (
-                      <span className="badge badge-amber">→ Waiting</span>
+                      <span className="badge badge-emerald"><Check size={8} /> Verified</span>
+                    ) : t.status === 'WAITING_APPROVAL' ? (
+                      <span className="badge badge-amber">Gate Held</span>
                     ) : (
-                      <span className="badge badge-neutral">○ Not Started</span>
+                      <span className="badge badge-neutral">Pending</span>
                     )}
                   </div>
+
                   {t.result && (
                     <div className="font-mono" style={{
-                      marginTop: '6px',
+                      marginTop: '5px',
                       padding: '4px 6px',
-                      backgroundColor: '#000000',
+                      backgroundColor: '#09090b',
                       borderRadius: '3px',
                       fontSize: '10px',
-                      color: 'var(--accent-green)',
-                      overflowX: 'auto'
+                      color: '#d4d4d8',
+                      overflowX: 'auto',
+                      border: '1px solid #1c1c20'
                     }}>
                       {typeof t.result === 'object' ? JSON.stringify(t.result) : t.result}
                     </div>
@@ -265,144 +375,193 @@ export default function TicketDetailPage({ ticketDetail, onBack, onHumanAction }
 
         </div>
 
-        {/* Column 3: Customer Context & Human Intervention Info */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Column 3: Customer 360 & Safety Action Gate */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           
-          {/* Customer Context */}
-          <div className="phrona-card">
-            <h3 style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '12px' }}>
-              Customer Profile & Context
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Customer Profile */}
+          <div className="shadcn-card">
+            <div style={{ fontSize: '10.5px', color: '#71717a', textTransform: 'uppercase', fontWeight: '600', marginBottom: '8px' }}>
+              Customer Profile (§10)
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div>
-                <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-emphasis)' }}>
+                <div style={{ fontSize: '14px', fontWeight: '600', color: '#fafafa' }}>
                   {ticket.customer_name}
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{ticket.customer_email}</div>
+                <div style={{ fontSize: '11px', color: '#71717a' }}>{ticket.customer_email}</div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '6px',
+                paddingTop: '6px',
+                borderTop: '1px solid var(--border)',
+                fontSize: '11px'
+              }}>
                 <div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Plan:</div>
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--accent-blue)' }}>{ticket.customer_plan}</div>
+                  <span style={{ color: '#71717a' }}>Plan:</span>
+                  <div style={{ fontWeight: '500', color: '#e4e4e7' }}>{ticket.customer_plan}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Account Age:</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{ticket.customer_account_age}</div>
+                  <span style={{ color: '#71717a' }}>Tenure:</span>
+                  <div style={{ color: '#e4e4e7' }}>{ticket.customer_account_age}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>History:</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{ticket.customer_ticket_count} tickets</div>
+                  <span style={{ color: '#71717a' }}>History:</span>
+                  <div style={{ color: '#e4e4e7' }}>{ticket.customer_ticket_count} tickets</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Sentiment:</div>
-                  <div style={{ fontSize: '12px', color: 'var(--accent-amber)' }}>{ticket.sentiment}</div>
+                  <span style={{ color: '#71717a' }}>Tier:</span>
+                  <div style={{ color: '#34d399', fontWeight: '500' }}>Platinum VIP</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Action Prompt Card if Waiting */}
-          {ticket.status === 'WAITING_FOR_HUMAN' && (
-            <div className="phrona-card" style={{ borderColor: 'var(--accent-amber)', backgroundColor: 'rgba(245, 158, 11, 0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-amber)', fontWeight: '600', marginBottom: '6px' }}>
-                <AlertCircle size={16} /> Human Approval Required
-              </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                Billing Agent detected duplicate transaction for ORD-83921. Proposed refund amount: ₹2,499.
-              </p>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn btn-primary" onClick={() => handleSubmitAction('APPROVE')}>
-                  [ APPROVE REFUND ]
+          {/* Action Safety Gate */}
+          <div className="shadcn-card" style={{
+            backgroundColor: ticket.status === 'WAITING_FOR_HUMAN' ? '#141418' : 'var(--card)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#fafafa', fontWeight: '600', fontSize: '11.5px', marginBottom: '4px' }}>
+              <ShieldAlert size={13} color="#fde68a" />
+              Action Safety Gate (§22)
+            </div>
+            
+            <p style={{ fontSize: '11px', color: '#a1a1aa', marginBottom: '8px', lineHeight: '1.4' }}>
+              {ticket.risk_level || 'Financial limit held (> ₹2,000 threshold). Proposed duplicate refund amount: ₹2,499.'}
+            </p>
+
+            {ticket.status === 'WAITING_FOR_HUMAN' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => handleSubmitAction('APPROVE')}
+                  style={{ width: '100%', padding: '6px', fontWeight: '600' }}
+                >
+                  <CheckCircle2 size={12} /> Authorize Refund (₹2,499)
                 </button>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button 
+                    className="btn btn-outline" 
+                    onClick={() => setActiveModal('GUIDE')}
+                    style={{ flex: 1, fontSize: '10.5px' }}
+                  >
+                    Guide
+                  </button>
+                  <button 
+                    className="btn btn-destructive" 
+                    onClick={() => setActiveModal('OVERRIDE')}
+                    style={{ flex: 1, fontSize: '10.5px' }}
+                  >
+                    Override
+                  </button>
+                </div>
               </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#34d399' }}>
+                <CheckCircle2 size={12} />
+                <span>Action authorized and ledger verified</span>
+              </div>
+            )}
+          </div>
+
+          {/* Event Activity Trace */}
+          <div className="shadcn-card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: '10.5px', color: '#71717a', textTransform: 'uppercase', fontWeight: '600', marginBottom: '6px' }}>
+              Execution Trace
             </div>
-          )}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px' }}>
+              {events?.map(ev => (
+                <div key={ev.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '10.5px' }}>
+                  <span className="font-mono" style={{ color: '#52525b', fontSize: '9.5px', marginTop: '1px' }}>
+                    {ev.timestamp?.substring(0, 8) || 'Realtime'}
+                  </span>
+                  <div style={{ color: '#a1a1aa', lineHeight: '1.3' }}>
+                    {ev.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
         </div>
+
       </div>
 
-      {/* Activity Timeline */}
-      <div className="phrona-card">
-        <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-emphasis)', marginBottom: '12px' }}>
-          Event Activity Timeline
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {events.map(ev => (
-            <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px' }}>
-              <span className="font-mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                {ev.timestamp.substring(11, 19)}
-              </span>
-              <span className="badge badge-neutral">{ev.event_type}</span>
-              <span style={{ color: 'var(--text-primary)' }}>{ev.description}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Interactive Human Action Modal */}
+      {/* Human Action Dialog */}
       {activeModal && (
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.8)',
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(3px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 9999
+          zIndex: 10000
         }}>
-          <div className="phrona-card" style={{ width: '450px', backgroundColor: 'var(--bg-secondary)' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-emphasis)', marginBottom: '12px' }}>
-              Human Action: {activeModal}
+          <div className="shadcn-card" style={{ width: '460px', padding: '20px', backgroundColor: '#0f0f12' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+              <span className="badge badge-secondary">{activeModal} Action</span>
+            </div>
+            <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#fafafa', marginBottom: '4px' }}>
+              Human Operator Control
             </h3>
 
             {activeModal === 'GUIDE' && (
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                Provide operational guidance for Phrona to consider when processing this ticket:
+              <p style={{ fontSize: '11.5px', color: '#a1a1aa', marginBottom: '12px' }}>
+                Inject contextual guidance directly into the active working memory without interrupting automated execution:
               </p>
             )}
 
             {activeModal === 'CORRECT' && (
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                Specify corrected AI decision (will generate a Learning Signal):
+              <p style={{ fontSize: '11.5px', color: '#a1a1aa', marginBottom: '12px' }}>
+                Specify corrected business logic. This generates a structured learning signal δ to update associative model weights:
               </p>
             )}
 
             {activeModal === 'OVERRIDE' && (
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                Enter override justification to manually resolve this issue:
+              <p style={{ fontSize: '11.5px', color: '#a1a1aa', marginBottom: '12px' }}>
+                Manually supersede the autonomous pipeline. Enter mandatory audit justification for compliance records:
               </p>
             )}
 
             {activeModal === 'APPROVE' && (
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                Confirm supervisor approval for proposed action: Issue duplicate refund of ₹2,499.
+              <p style={{ fontSize: '11.5px', color: '#a1a1aa', marginBottom: '12px' }}>
+                Authorize high-risk financial action execution (Duplicate Refund of ₹2,499 for TXN-83921-B). System will trigger 2-phase ledger verification.
+              </p>
+            )}
+
+            {activeModal === 'TEACH' && (
+              <p style={{ fontSize: '11.5px', color: '#a1a1aa', marginBottom: '12px' }}>
+                Add this operational heuristic to Organizational Memory to permanently resolve future duplicate charges:
               </p>
             )}
 
             {activeModal !== 'APPROVE' && (
-              <textarea
-                rows={3}
-                placeholder="Type instruction or correction..."
-                value={inputText}
-                onChange={e => setInputText(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--text-primary)',
-                  borderRadius: '4px',
-                  outline: 'none',
-                  fontSize: '12px',
-                  marginBottom: '12px'
-                }}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+                <textarea
+                  rows={3}
+                  placeholder={
+                    activeModal === 'GUIDE' ? "e.g. Inquire about merchant batch closing time before proceeding..." :
+                    activeModal === 'CORRECT' ? "e.g. Issue partial store credit instead of full replacement..." :
+                    activeModal === 'TEACH' ? "e.g. If payment succeeds but order is pending > 25 mins, verify settlement..." :
+                    "Provide override justification..."
+                  }
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  className="shadcn-input"
+                  style={{ fontSize: '11.5px', resize: 'vertical' }}
+                />
+              </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button className="btn" onClick={() => setActiveModal(null)}>Cancel</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+              <button className="btn btn-outline" onClick={() => setActiveModal(null)}>Cancel</button>
               <button className="btn btn-primary" onClick={() => handleSubmitAction(activeModal)}>
-                Submit {activeModal}
+                Confirm {activeModal}
               </button>
             </div>
           </div>
